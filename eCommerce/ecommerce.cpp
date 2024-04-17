@@ -19,11 +19,12 @@ eCommerce::eCommerce(QCoreApplication *a)
     {
         zmq::context_t context(1);
 
-        zmq::socket_t subscriber( context, ZMQ_SUB );
-        subscriber.connect( "tcp://benternet.pxl-ea-ict.be:24042" );
 
         zmq::socket_t pusher( context, ZMQ_PUSH );
         pusher.connect( "tcp://benternet.pxl-ea-ict.be:24041" );
+
+        zmq::socket_t subscriber( context, ZMQ_SUB );
+        subscriber.connect( "tcp://benternet.pxl-ea-ict.be:24042" );
 
         const char* topic = "eCommerce>help";
         subscriber.setsockopt(ZMQ_SUBSCRIBE, topic, strlen(topic));
