@@ -75,7 +75,7 @@ Feel free to explore the available commands and manage your shopping experience 
 
 ## Diagrams
 
-![diagram]("./media/BasicDiagram.png")
+![diagram](./media/BasicDiagram.png)
 
 ![diagram](./media/diagram.png?raw=true)
 
@@ -84,14 +84,16 @@ Feel free to explore the available commands and manage your shopping experience 
 ## Commands
 
 1. browseProducts - Display a list of available products.
-2. searchProducts <keyword> - Search for products by keyword.
-3. addToCart <productId> <quantity> - Add a product to the shopping cart.
-4. removeFromCart <productId> - Remove a product from the shopping cart.
+2. searchProducts (keyword) - Search for products by keyword.
+3. addToCart (productId) (quantity) - Add a product to the shopping cart.
+4. removeFromCart (productId) - Remove a product from the shopping cart.
 5. viewCart - View the contents of the shopping cart.
 6. checkout - Process the checkout and place an order.
 7. help - Display available commands.
 8. updateCartItem - Update the quantity of a product in the shopping cart.
 9. clearCart - Remove all products from the shopping cart.
-10. viewProduct <productId> - View details of a specific product.
+10. viewProduct (productId) - View details of a specific product.
 11. viewOrders - View a list of past orders.
-12. cancelOrder <orderId> - Cancel a specific order.
+12. cancelOrder (orderId) - Cancel a specific order.
+13. Start - Start the eCommerce interaction.
+14. Stop - Stop the eCommerce interaction.
