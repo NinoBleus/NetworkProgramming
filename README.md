@@ -77,6 +77,7 @@ Feel free to explore the available commands and manage your shopping experience 
 
 ![diagram](./media/BasicDiagram.png)
 
+
 ![diagram](./media/diagram.png?raw=true)
 
 ![diagram](./media/diagram.png?raw=true)
