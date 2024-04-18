@@ -75,10 +75,13 @@ Feel free to explore the available commands and manage your shopping experience 
 
 ## Diagrams
 
-![diagram](./media/BasicDiagram.png)
+Following diagram shows how the server and client communicate and work together:
 
+![Basic diagram](./media/BasicDiagram.png)
 
-![diagram](./media/diagram.png?raw=true)
+Following diagram shows an example of how to interact with the server:
+
+![diagram](./media/InteractionDiagram.png)
 
 ![diagram](./media/diagram.png?raw=true)
 
@@ -94,7 +97,9 @@ Feel free to explore the available commands and manage your shopping experience 
 8. updateCartItem - Update the quantity of a product in the shopping cart.
 9. clearCart - Remove all products from the shopping cart.
 10. viewProduct (productId) - View details of a specific product.
-11. viewOrders - View a list of past orders.
-12. cancelOrder (orderId) - Cancel a specific order.
-13. Start - Start the eCommerce interaction.
-14. Stop - Stop the eCommerce interaction.
+11. startOrder (orderId) - Start a order where items can be added to
+12. viewOrders - View a list of past orders.
+13. cancelOrder (orderId) - Cancel a specific order.
+14. pay (price) - pay after checkout
+14. Start - Start the eCommerce interaction. 
+15. Stop - Stop the eCommerce interaction.
