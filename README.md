@@ -1,6 +1,5 @@
 # eCommerce
 
-
 ## Overview
 
 This eCommerce program allows users to browse, search for, and manage products, as well as handle orders and view order history.
@@ -14,57 +13,57 @@ To interact with the eCommerce program running on our server, follow these steps
 
    - To display a list of available products:
      ```
-     eCommerce>browseProducts
+     eCommerce?>browseProducts
      ```
 
    - To search for products by keyword (e.g., "laptop"):
      ```
-     eCommerce>searchProducts laptop
+     eCommerce?>searchProducts laptop
      ```
 
    - To add a product to the shopping cart (e.g., product ID: 12345, quantity: 2):
      ```
-     eCommerce>addToCart 12345 2
+     eCommerce?>addToCart 12345 2
      ```
 
    - To remove a product from the shopping cart (e.g., product ID: 54321):
      ```
-     eCommerce>removeFromCart 54321
+     eCommerce?>removeFromCart 54321
      ```
 
    - To view the contents of the shopping cart:
      ```
-     eCommerce>viewCart
+     eCommerce?>viewCart
      ```
 
    - To process the checkout and place an order:
      ```
-     eCommerce>checkout
+     eCommerce?>checkout
      ```
 
    - To update the quantity of a product in the shopping cart:
      ```
-     eCommerce>updateCartItem
+     eCommerce?>updateCartItem
      ```
 
    - To remove all products from the shopping cart:
      ```
-     eCommerce>clearCart
+     eCommerce?>clearCart
      ```
 
    - To view details of a specific product (e.g., product ID: 12345):
      ```
-     eCommerce>viewProduct 12345
+     eCommerce?>viewProduct 12345
      ```
 
    - To view a list of past orders:
      ```
-     eCommerce>viewOrders
+     eCommerce?>viewOrders
      ```
 
    - To cancel a specific order (e.g., order ID: 98765):
      ```
-     eCommerce>cancelOrder 98765
+     eCommerce?>cancelOrder 98765
      ```
 
 3. **Receive Responses**: After sending a command to the server, you will receive responses indicating the outcome of your actions.
@@ -75,15 +74,13 @@ Feel free to explore the available commands and manage your shopping experience 
 
 ## Diagrams
 
-Following diagram shows how the server and client communicate and work together:
+The following diagram shows how the server and client communicate and work together:
 
 ![Basic diagram](./media/BasicDiagram.png)
 
-Following diagram shows an example of how to interact with the server:
+The following diagram shows an example of how to interact with the server:
 
 ![diagram](./media/InteractionDiagram.png)
-
-![diagram](./media/diagram.png?raw=true)
 
 ## Commands
 
@@ -97,9 +94,14 @@ Following diagram shows an example of how to interact with the server:
 8. updateCartItem - Update the quantity of a product in the shopping cart.
 9. clearCart - Remove all products from the shopping cart.
 10. viewProduct (productId) - View details of a specific product.
-11. startOrder (orderId) - Start a order where items can be added to
+11. startOrder (orderId) - Start an order where items can be added to
 12. viewOrders - View a list of past orders.
 13. cancelOrder (orderId) - Cancel a specific order.
 14. pay (price) - pay after checkout
 14. Start - Start the eCommerce interaction. 
 15. Stop - Stop the eCommerce interaction.
+
+## TO DO
+[ ] Add Name parameter that needs to be given by the user for multi-user service (or make a flag that gets set high once somebody starts the program to make it blocking for other people)
+   [ ] optionally add a second data base if multi-user is added
+[ ] Add a database of some sorts to keep inventory data in
