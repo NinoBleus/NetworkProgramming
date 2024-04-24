@@ -103,5 +103,5 @@ The following diagram shows an example of how to interact with the server:
 
 ## TO DO
 - [ ] Add Name parameter that needs to be given by the user for multi-user service (or make a flag that gets set high once somebody starts the program to make it blocking for other people)
- - [ ] optionally add a second data base if multi-user is added
+ - [ ] optionally add a database if multi-user is added
 - [ ] Add a database of some sorts to keep inventory data in
