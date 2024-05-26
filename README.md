@@ -82,7 +82,7 @@ The following diagram shows an example of how to interact with the server:
 
 ![diagram](./media/InteractionDiagram.png)
 
-## Commands
+## Concept Commands
 
 1. browseProducts - Display a list of available products.
 2. searchProducts (keyword) - Search for products by keyword.
@@ -100,6 +100,46 @@ The following diagram shows an example of how to interact with the server:
 14. pay (price) - pay after checkout
 14. Start - Start the eCommerce interaction. 
 15. Stop - Stop the eCommerce interaction.
+
+## Available Commands
+
+1. **browseProducts**
+   - **Description:** Display a list of available products.
+   - **Example:** `eCommerce>username>browseProducts?`
+
+2. **searchProducts <keyword>**
+   - **Description:** Search for products by keyword.
+   - **Example:** `eCommerce>username>searchProducts?keyword`
+
+3. **addToCart <productId> <quantity>**
+   - **Description:** Add a product to the shopping cart.
+   - **Example:** `eCommerce>username>addToCart?>1>2` (Add 2 units of product with ID 1 to the cart)
+
+4. **removeFromCart <productId>**
+   - **Description:** Remove a product from the shopping cart.
+   - **Example:** `eCommerce>username>removeFromCart?>1` (Remove product with ID 1 from the cart)
+
+5. **viewCart**
+   - **Description:** View the contents of the shopping cart.
+   - **Example:** `eCommerce>username>viewCart?`
+
+6. **checkout**
+   - **Description:** Process the checkout and place an order.
+   - **Example:** `eCommerce>username>checkout?`
+
+7. **pay**
+   - **Description:** Complete the payment for your order.
+   - **Example:** `eCommerce>username>pay?`
+
+8. **viewOrders**
+   - **Description:** View past orders.
+   - **Example:** `eCommerce>username>viewOrders?`
+
+9. **stop**
+   - **Description:** Log out and clear the cart.
+   - **Example:** `eCommerce>username>stop?`
+
+
 
 ## TO DO
 - [ ] Add Name parameter that needs to be given by the user for multi-user service (or make a flag that gets set high once somebody starts the program to make it blocking for other people)
