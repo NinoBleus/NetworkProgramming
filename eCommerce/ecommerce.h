@@ -7,6 +7,9 @@
 #include <mutex>
 #include <zmq.hpp>
 #include <QCoreApplication>
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(ecommercelog)
 
 class eCommerce {
 public:
@@ -31,9 +34,14 @@ private:
     std::string viewCart(const std::string& username);
     std::string viewOrders(const std::string& username);
     void addToCart(const std::string& username, int productId, int quantity);
+    void removeFromCart(const std::string& username, int productId);
+    bool canRemoveFromCart(const std::string& username, int productId);
     void checkout(const std::string& username);
     void stop(const std::string& username);
     void pay(const std::string& username);
+    void sendHeartbeat();
+    void receiveHeartbeat();
+    void Log(const QString& message, QtMsgType type = QtInfoMsg);
 };
 
 #endif // ECOMMERCE_H

@@ -34,28 +34,28 @@ void runTestScenario(zmq::context_t& context, int userId)
 
     // Initial set of commands
     std::vector<std::string> commands = {
-        "eCommerce>User" + std::to_string(userId) + ">start?",
-        "eCommerce>User" + std::to_string(userId) + ">help?",
-        "eCommerce>User" + std::to_string(userId) + ">browseProducts?"
+        "eCommerce?>User" + std::to_string(userId) + ">start",
+        "eCommerce?>User" + std::to_string(userId) + ">help",
+        "eCommerce?>User" + std::to_string(userId) + ">browseProducts"
     };
 
     // Add random addToCart commands
     for (int i = 0; i < addToCartCount; ++i)
     {
-        commands.push_back("eCommerce>User" + std::to_string(userId) + ">addToCart?>" + std::to_string(productDist(gen)) + ">" + std::to_string(quantityDist(gen)));
+        commands.push_back("eCommerce?>User" + std::to_string(userId) + ">addToCart>" + std::to_string(productDist(gen)) + ">" + std::to_string(quantityDist(gen)));
     }
 
     // Remaining set of commands
-    commands.push_back("eCommerce>User" + std::to_string(userId) + ">viewCart?");
-    commands.push_back("eCommerce>User" + std::to_string(userId) + ">checkout?");
+    commands.push_back("eCommerce?>User" + std::to_string(userId) + ">viewCart");
+    commands.push_back("eCommerce?>User" + std::to_string(userId) + ">checkout");
 
     // 50/50 chance to add the pay command
     if (payDist(gen)) {
-        commands.push_back("eCommerce>User" + std::to_string(userId) + ">pay?");
+        commands.push_back("eCommerce?>User" + std::to_string(userId) + ">pay");
     }
 
-    commands.push_back("eCommerce>User" + std::to_string(userId) + ">viewOrders?");
-    commands.push_back("eCommerce>User" + std::to_string(userId) + ">stop?");
+    commands.push_back("eCommerce?>User" + std::to_string(userId) + ">viewOrders");
+    commands.push_back("eCommerce?>User" + std::to_string(userId) + ">stop");
 
     for (const auto& command : commands)
     {
