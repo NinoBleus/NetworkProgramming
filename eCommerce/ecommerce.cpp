@@ -57,7 +57,7 @@ eCommerce::eCommerce(QCoreApplication *a)
                 {
                     // Timeout occurred, send a heartbeat
                     sendHeartbeat();
-                    std::this_thread::sleep_for(std::chrono::seconds(5)); // Sleep to prevent busy waiting
+                    std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep to prevent busy waiting
                 }
             }
             catch (zmq::error_t& ex)
@@ -311,14 +311,13 @@ std::string eCommerce::getHelpMessage()
 {
     std::string info = "Available commands:\n"
                        "1. browseProducts - Display a list of available products.\n"
-                       "2. searchProducts <keyword> - Search for products by keyword.\n"
-                       "3. addToCart <productId> <quantity> - Add a product to the shopping cart.\n"
-                       "4. removeFromCart <productId> - Remove a product from the shopping cart.\n"
-                       "5. viewCart - View the contents of the shopping cart.\n"
-                       "6. checkout - Process the checkout and place an order.\n"
-                       "7. pay - Complete the payment for your order.\n"
-                       "8. viewOrders - View past orders.\n"
-                       "9. stop - Log out and clear the cart.\n";
+                       "2. addToCart <productId> <quantity> - Add a product to the shopping cart.\n"
+                       "3. removeFromCart <productId> - Remove a product from the shopping cart.\n"
+                       "4. viewCart - View the contents of the shopping cart.\n"
+                       "5. checkout - Process the checkout and place an order.\n"
+                       "6. pay - Complete the payment for your order.\n"
+                       "7. viewOrders - View past orders.\n"
+                       "8. stop - Log out and clear the cart.\n";
     qCInfo(ecommercelog) << "Generated help message.";
     return info;
 }
@@ -330,14 +329,13 @@ std::string eCommerce::getWelcomeMessage()
     welcome += "This system allows you to browse products, add them to your cart, and make purchases with ease.\n";
     welcome += "To get started, you can use the following commands:\n";
     welcome += "1. browseProducts - Display a list of available products.\n";
-    welcome += "2. searchProducts <keyword> - Search for products by keyword.\n";
-    welcome += "3. addToCart <productId> <quantity> - Add a product to the shopping cart.\n";
-    welcome += "4. removeFromCart <productId> - Remove a product from the shopping cart.\n";
-    welcome += "5. viewCart - View the contents of the shopping cart.\n";
-    welcome += "6. checkout - Process the checkout and place an order.\n";
-    welcome += "7. pay - Complete the payment for your order.\n";
-    welcome += "8. viewOrders - View past orders.\n";
-    welcome += "9. stop - Log out and clear the cart.\n";
+    welcome += "2. addToCart <productId> <quantity> - Add a product to the shopping cart.\n";
+    welcome += "3. removeFromCart <productId> - Remove a product from the shopping cart.\n";
+    welcome += "4. viewCart - View the contents of the shopping cart.\n";
+    welcome += "5. checkout - Process the checkout and place an order.\n";
+    welcome += "6. pay - Complete the payment for your order.\n";
+    welcome += "7. viewOrders - View past orders.\n";
+    welcome += "8. stop - Log out and clear the cart.\n";
     welcome += "If you need any assistance, please use the 'help' command or contact our support team.\n";
     welcome += "Happy shopping!";
     qCInfo(ecommercelog) << "Generated welcome message.";

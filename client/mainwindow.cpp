@@ -136,7 +136,6 @@ void MainWindow::checkForIncomingMessages()
         zmq::message_t msg;
         auto result = subscriber.recv(msg, zmq::recv_flags::dontwait);
         if (!result) break;
-
         std::string receivedMsg(static_cast<char*>(msg.data()), msg.size());
 
         // Filter out heartbeat messages
@@ -145,5 +144,6 @@ void MainWindow::checkForIncomingMessages()
         }
 
         ui->messagesListWidget->addItem(QString::fromStdString(receivedMsg));
+        ui->messagesListWidget->scrollToBottom();
     }
 }

@@ -32,7 +32,7 @@
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>113</width>
+      <width>111</width>
       <height>24</height>
      </rect>
     </property>
@@ -40,8 +40,8 @@
    <widget class="QPushButton" name="browseProductsButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>80</y>
+      <x>150</x>
+      <y>30</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -53,8 +53,8 @@
    <widget class="QPushButton" name="addToCartButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>110</y>
+      <x>150</x>
+      <y>60</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -66,8 +66,8 @@
    <widget class="QPushButton" name="viewCartButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>170</y>
+      <x>300</x>
+      <y>60</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -79,8 +79,8 @@
    <widget class="QPushButton" name="checkoutButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>200</y>
+      <x>300</x>
+      <y>90</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -93,7 +93,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>230</y>
+      <y>60</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -106,7 +106,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>260</y>
+      <y>90</y>
       <width>111</width>
       <height>24</height>
      </rect>
@@ -118,9 +118,9 @@
    <widget class="QLineEdit" name="productIdLineEdit">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>110</y>
-      <width>61</width>
+      <x>150</x>
+      <y>90</y>
+      <width>51</width>
       <height>24</height>
      </rect>
     </property>
@@ -128,9 +128,9 @@
    <widget class="QLineEdit" name="quantityLineEdit">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>110</y>
-      <width>61</width>
+      <x>210</x>
+      <y>90</y>
+      <width>51</width>
       <height>24</height>
      </rect>
     </property>
@@ -138,11 +138,16 @@
    <widget class="QLabel" name="Username_2">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>90</y>
-      <width>61</width>
+      <x>150</x>
+      <y>110</y>
+      <width>41</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Product ID</string>
@@ -151,11 +156,16 @@
    <widget class="QLabel" name="Username_3">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>90</y>
-      <width>61</width>
+      <x>210</x>
+      <y>110</y>
+      <width>51</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Quantity</string>
@@ -164,18 +174,21 @@
    <widget class="QListWidget" name="messagesListWidget">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>140</y>
-      <width>661</width>
-      <height>411</height>
+      <x>10</x>
+      <y>130</y>
+      <width>781</width>
+      <height>421</height>
      </rect>
+    </property>
+    <property name="tabletTracking">
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="removeFromCartButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>140</y>
+      <x>300</x>
+      <y>30</y>
       <width>111</width>
       <height>24</height>
      </rect>
