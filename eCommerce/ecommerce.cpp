@@ -77,18 +77,16 @@ eCommerce::eCommerce(QCoreApplication *a)
 
 void eCommerce::sendHeartbeat()
 {
-    auto now = std::chrono::system_clock::now();
-    auto now_c = std::chrono::system_clock::to_time_t(now);
-    std::string heartbeat = "eCommerce?>keepalive>heartbeat>" + std::to_string(now_c);
+    std::string heartbeat = "eCommerce?>keepalive>heartbeat>";
     pusher.send(zmq::buffer(heartbeat), zmq::send_flags::none);
-    qCInfo(ecommercelog) << "Sent heartbeat message with timestamp:" << now_c;
+    qCInfo(heartbeatlog) << "Sent heartbeat message.";
 }
 
 void eCommerce::receiveHeartbeat()
 {
     std::string heartbeat = "eCommerce!>heartbeat>pulse";
     pusher.send(zmq::buffer(heartbeat), zmq::send_flags::none);
-    qCInfo(ecommercelog) << "Received heartbeat message.";
+    qCInfo(heartbeatlog) << "Received heartbeat message.";
 }
 
 void eCommerce::handleMessage(const std::string& msg)

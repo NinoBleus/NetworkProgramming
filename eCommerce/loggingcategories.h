@@ -4,5 +4,6 @@
 #include <QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(ecommercelog)
+Q_DECLARE_LOGGING_CATEGORY(heartbeatlog)
 
 #endif // LOGGINGCATEGORIES_H
