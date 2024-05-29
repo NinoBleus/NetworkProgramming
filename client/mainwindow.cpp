@@ -13,14 +13,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    pusher.connect("tcp://benternet.pxl-ea-ict.be:24041");
-    subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
+    // pusher.connect("tcp://benternet.pxl-ea-ict.be:24041");
+    // subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
+
+    pusher.connect("tcp://localhost:24041");
+    subscriber.connect("tcp://localhost:24042");
+
     subscriber.set(zmq::sockopt::subscribe, "eCommerce!");
 
     // Setting up UI signals and slots
     connect(ui->browseProductsButton, &QPushButton::clicked, this, &MainWindow::browseProductsButton_clicked);
     connect(ui->addToCartButton, &QPushButton::clicked, this, &MainWindow::addToCartButton_clicked);
-    connect(ui->removeFromCartButton, &QPushButton::clicked, this, &MainWindow::removeFromCartButton_clicked);
+    connect(ui->clearCartButton, &QPushButton::clicked, this, &MainWindow::clearCartButton_clicked);
     connect(ui->viewCartButton, &QPushButton::clicked, this, &MainWindow::viewCartButton_clicked);
     connect(ui->checkoutButton, &QPushButton::clicked, this, &MainWindow::checkoutButton_clicked);
     connect(ui->payButton, &QPushButton::clicked, this, &MainWindow::payButton_clicked);
@@ -72,17 +76,15 @@ void MainWindow::addToCartButton_clicked()
     sendMessage(message);
 }
 
-void MainWindow::removeFromCartButton_clicked()
+void MainWindow::clearCartButton_clicked()
 {
-    qDebug() << "Removed from Cart Button Clicked";
+    qDebug() << "Clear Cart Button Clicked";
     std::string username = getUsername();
     if (username.empty()) {
         QMessageBox::warning(this, "Error", "Username cannot be empty");
         return;
     }
-    int productId = ui->productIdLineEdit->text().toInt();
-    int quantity = ui->quantityLineEdit->text().toInt();
-    std::string message = "eCommerce?>" + username + ">removeFromCart>" + std::to_string(productId);
+    std::string message = "eCommerce?>" + username + ">clearCart";
     sendMessage(message);
 }
 

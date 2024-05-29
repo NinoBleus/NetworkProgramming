@@ -22,7 +22,7 @@ public:
 private slots:
     void browseProductsButton_clicked();
     void addToCartButton_clicked();
-    void removeFromCartButton_clicked();
+    void clearCartButton_clicked();
     void viewCartButton_clicked();
     void checkoutButton_clicked();
     void payButton_clicked();

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <thread>
+#include <atomic>
 #include <zmq.hpp>
 #include <QCoreApplication>
 #include <QLoggingCategory>
@@ -12,12 +14,13 @@
 Q_DECLARE_LOGGING_CATEGORY(ecommercelog)
 Q_DECLARE_LOGGING_CATEGORY(heartbeatlog)
 
-
 class eCommerce {
 public:
     eCommerce(QCoreApplication *a);
+    ~eCommerce();
 
-    void handleMessage(const std::string& msg);
+    void sendHeartbeat();
+    void receiveHeartbeat();
 
 private:
     zmq::context_t context;
@@ -30,6 +33,19 @@ private:
     std::map<std::string, bool> userPaymentStatus;
     std::mutex cartMutex;
 
+    std::thread serverThread;
+    std::thread heartbeatThread;
+    std::atomic<bool> running;
+
+    void serverTask();
+    void heartbeatTask();
+    void handleMessage(const std::string& msg);
+    void handleCommand(const std::string& username, const std::string& command, const std::vector<std::string>& segments);
+
+    void sendResponse(const std::string& username, const std::string& command, const std::string& message);
+    void handleAddToCart(const std::string& username, const std::vector<std::string>& segments);
+    void handleClearCart(const std::string& username);
+
     std::string getHelpMessage();
     std::string getWelcomeMessage();
     std::string getBrowseProductsMessage();
@@ -41,9 +57,14 @@ private:
     void checkout(const std::string& username);
     void stop(const std::string& username);
     void pay(const std::string& username);
-    void sendHeartbeat();
-    void receiveHeartbeat();
-    void Log(const QString& message, QtMsgType type = QtInfoMsg);
+
+    void initializeProducts();
+    void setupConnections();
+    void startThreads();
+    void reconnect();
+
+    std::vector<std::string> splitMessage(const std::string& msg, char delimiter);
+    void validateAddToCartInput(int productId, int quantity);
 };
 
 #endif // ECOMMERCE_H

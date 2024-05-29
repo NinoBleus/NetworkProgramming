@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 
     // Initial logging filter rules
     QLoggingCategory::setFilterRules("ecommerce.debug=false\n"
-                                     "ecommerce.info=false\n"
+                                     "ecommerce.info=true\n"
                                      "ecommerce.warning=true\n"
                                      "ecommerce.critical=true\n"
                                      "heartbeat.info=false");
