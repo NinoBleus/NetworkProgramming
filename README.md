@@ -99,9 +99,9 @@ The following diagram shows an example of how to interact with the server:
    - **Description:** Add a product to the shopping cart.
    - **Example:** `eCommerce?>username>addToCart>1>2` (Add 2 units of product with ID 1 to the cart)
 
-3. **removeFromCart <productId>**
-   - **Description:** Remove a product from the shopping cart.
-   - **Example:** `eCommerce?>username>removeFromCart>1` (Remove product with ID 1 from the cart)
+3. **clearCart**
+   - **Description:** Remove all products from the shopping cart.
+   - **Example:** `eCommerce?>username>clearCart` 
 
 4. **viewCart**
    - **Description:** View the contents of the shopping cart.
@@ -128,4 +128,4 @@ The following diagram shows an example of how to interact with the server:
 ## TO DO
 - [ ] add updateCartItem
 - [ ] add cancelOrder
-- [ ] add clearCart
+- [ ] add removeitemfromcart
