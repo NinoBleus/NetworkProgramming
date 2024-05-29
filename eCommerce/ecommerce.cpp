@@ -33,9 +33,9 @@ void eCommerce::setupConnections()
 {
     try
     {
-        subscriber.connect("tcp://localhost:24042");
+        subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
         qCInfo(ecommercelog) << "Subscriber connected to endpoint.";
-        pusher.connect("tcp://localhost:24041");
+        pusher.connect("tcp://benternet.pxl-ea-ict.be:24041");
         qCInfo(ecommercelog) << "Pusher connected to endpoint.";
 
         const char* topic = "eCommerce?";

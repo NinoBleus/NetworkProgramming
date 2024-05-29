@@ -13,11 +13,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // pusher.connect("tcp://benternet.pxl-ea-ict.be:24041");
-    // subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
+    pusher.connect("tcp://benternet.pxl-ea-ict.be:24041");
+    subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
 
-    pusher.connect("tcp://localhost:24041");
-    subscriber.connect("tcp://localhost:24042");
+    // pusher.connect("tcp://localhost:24041");
+    // subscriber.connect("tcp://localhost:24042");
 
     subscriber.set(zmq::sockopt::subscribe, "eCommerce!");
 
