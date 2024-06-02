@@ -45,6 +45,9 @@ private:
     void sendResponse(const std::string& username, const std::string& command, const std::string& message);
     void handleAddToCart(const std::string& username, const std::vector<std::string>& segments);
     void handleClearCart(const std::string& username);
+    void updateCartItem(const std::string& username, const std::vector<std::string>& segments);
+    void cancelOrder(const std::string& username);
+    void removeItemFromCart(const std::string& username, const std::vector<std::string>& segments);
 
     std::string getHelpMessage();
     std::string getWelcomeMessage();
