@@ -6,32 +6,21 @@
 #include <cstdlib>
 #include <ctime>
 #include <stdexcept>
+#include <unordered_map>
+#include <mutex>
+#include <functional>
+#include <iostream>
 
-/**
- * @brief Constructor for the eCommerce class.
- *
- * Initializes the context, subscriber, and pusher sockets.
- * Sets up the initial state, logs start message, initializes products,
- * sets up connections, and starts necessary threads.
- *
- * @param a Pointer to QCoreApplication instance.
- */
 eCommerce::eCommerce(QCoreApplication *a)
     : context(1), subscriber(context, ZMQ_SUB), pusher(context, ZMQ_PUSH), running(true)
 {
     srand(time(0));
     qCInfo(ecommercelog) << "eCommerce server starting...";
-
     initializeProducts();
     setupConnections();
     startThreads();
 }
 
-/**
- * @brief Destructor for the eCommerce class.
- *
- * Ensures the threads are stopped gracefully.
- */
 eCommerce::~eCommerce()
 {
     running = false;
@@ -43,11 +32,6 @@ eCommerce::~eCommerce()
     }
 }
 
-/**
- * @brief Sets up connections to the message broker using ZeroMQ.
- *
- * Establishes subscriber and pusher connections and subscribes to the eCommerce topic.
- */
 void eCommerce::setupConnections()
 {
     try
@@ -68,20 +52,12 @@ void eCommerce::setupConnections()
     }
 }
 
-/**
- * @brief Starts the server and heartbeat threads for handling messages and sending heartbeats.
- */
 void eCommerce::startThreads()
 {
     serverThread = std::thread(&eCommerce::serverTask, this);
     heartbeatThread = std::thread(&eCommerce::heartbeatTask, this);
 }
 
-/**
- * @brief Main server task for receiving and handling messages.
- *
- * Continuously checks for incoming messages and processes them.
- */
 void eCommerce::serverTask()
 {
     while (running)
@@ -111,9 +87,6 @@ void eCommerce::serverTask()
     }
 }
 
-/**
- * @brief Reconnects the subscriber and pusher to the message broker endpoints.
- */
 void eCommerce::reconnect()
 {
     subscriber.connect("tcp://benternet.pxl-ea-ict.be:24042");
@@ -122,9 +95,6 @@ void eCommerce::reconnect()
     qCInfo(ecommercelog) << "Pusher reconnected to endpoint.";
 }
 
-/**
- * @brief Heartbeat task for sending periodic heartbeat messages to the broker.
- */
 void eCommerce::heartbeatTask()
 {
     while (running)
@@ -134,9 +104,6 @@ void eCommerce::heartbeatTask()
     }
 }
 
-/**
- * @brief Initializes the list of available products.
- */
 void eCommerce::initializeProducts()
 {
     products = {
@@ -153,9 +120,6 @@ void eCommerce::initializeProducts()
     };
 }
 
-/**
- * @brief Sends a heartbeat message to the broker to indicate the server is alive.
- */
 void eCommerce::sendHeartbeat()
 {
     std::string heartbeat = "eCommerce?>keepalive>heartbeat>";
@@ -163,9 +127,6 @@ void eCommerce::sendHeartbeat()
     qCInfo(heartbeatlog) << "Sent heartbeat message.";
 }
 
-/**
- * @brief Receives a heartbeat message and logs it.
- */
 void eCommerce::receiveHeartbeat()
 {
     std::string heartbeat = "eCommerce!>heartbeat>pulse";
@@ -173,40 +134,102 @@ void eCommerce::receiveHeartbeat()
     qCInfo(heartbeatlog) << "Received heartbeat message.";
 }
 
-/**
- * @brief Handles incoming messages and routes them to the appropriate command handlers.
- *
- * @param msg The received message to handle.
- */
 void eCommerce::handleMessage(const std::string& msg)
 {
-    if (msg == "eCommerce?>keepalive>heartbeat>") {
+    qCInfo(ecommercelog) << "Handling message:" << msg.c_str();
+
+    auto segments = splitMessage(msg, '>');
+    if (segments.size() < 4) {
+        qCWarning(ecommercelog) << "Invalid message format:" << msg.c_str();
+        return;
+    }
+
+    std::string username = segments[1];
+    std::string command = segments[2];
+    std::string password = segments[3];
+
+    if (command == "start") {
+        if (segments.size() != 4) {
+            qCWarning(ecommercelog) << "Invalid start command format:" << msg.c_str();
+            return;
+        }
+        qCInfo(ecommercelog) << "Setting password for user: " << username;
+        setUserPassword(username, password);
+        sendResponse(username, "start", getWelcomeMessage(), password);
+        return;
+    }
+
+    qCInfo(ecommercelog) << "Verifying password for user: " << username;
+    if (!verifyUserPassword(username, password)) {
+        sendResponse(username, command, "Error: Incorrect password.", password);
+        return;
+    }
+
+    if (command == "keepalive") {
         return; // Skip logging and handling for this specific message
     }
 
-    qCInfo(ecommercelog) << "Handling message:" << msg.c_str();
-
-    if (msg.find("eCommerce?>") != std::string::npos)
+    if (command == "browseProducts") {
+        sendResponse(username, "browseProducts", getBrowseProductsMessage(), password);
+    }
+    else if (command == "addToCart" && segments.size() == 6)
     {
-        auto segments = splitMessage(msg, '>');
-        if (segments.size() < 3) {
-            qCWarning(ecommercelog) << "Invalid message format:" << msg.c_str();
-            return;
-        }
-
-        std::string username = segments[1];
-        std::string command = segments[2];
-        handleCommand(username, command, segments);
+        handleAddToCart(username, segments, password);
+    }
+    else if (command == "clearCart")
+    {
+        handleClearCart(username, password);
+    }
+    else if (command == "viewCart")
+    {
+        sendResponse(username, "viewCart", viewCart(username), password);
+    }
+    else if (command == "checkout")
+    {
+        checkout(username, password);
+    }
+    else if (command == "pay")
+    {
+        pay(username, password);
+    }
+    else if (command == "viewOrders")
+    {
+        sendResponse(username, "viewOrders", viewOrders(username), password);
+    }
+    else if (command == "stop")
+    {
+        stop(username, password);
+    }
+    else if (command == "heartbeat")
+    {
+        receiveHeartbeat();
+    }
+    else if (command == "updateCartItem" && segments.size() == 6)
+    {
+        updateCartItem(username, segments, password);
+    }
+    else if (command == "cancelOrder")
+    {
+        cancelOrder(username, password);
+    }
+    else if (command == "removeItemFromCart" && segments.size() == 6)
+    {
+        removeItemFromCart(username, segments, password);
+    }
+    else if (command == "addToWishlist" && segments.size() == 5)
+    {
+        handleAddToWishlist(username, segments, password);
+    }
+    else if (command == "removeFromWishlist" && segments.size() == 5)
+    {
+        handleRemoveFromWishlist(username, segments, password);
+    }
+    else
+    {
+        qCWarning(ecommercelog) << "Unknown command:" << command.c_str();
     }
 }
 
-/**
- * @brief Splits a message string into segments based on a delimiter.
- *
- * @param msg The message to split.
- * @param delimiter The character used to split the message.
- * @return std::vector<std::string> A vector containing the split segments.
- */
 std::vector<std::string> eCommerce::splitMessage(const std::string& msg, char delimiter)
 {
     std::stringstream ss(msg);
@@ -219,125 +242,44 @@ std::vector<std::string> eCommerce::splitMessage(const std::string& msg, char de
     return segments;
 }
 
-/**
- * @brief Handles specific commands based on the message received.
- *
- * @param username The username associated with the command.
- * @param command The command to handle.
- * @param segments The message segments for the command.
- */
-void eCommerce::handleCommand(const std::string& username, const std::string& command, const std::vector<std::string>& segments)
+void eCommerce::setUserPassword(const std::string& username, const std::string& password)
 {
-    if (command == "start")
-    {
-        sendResponse(username, "start", getWelcomeMessage());
-    }
-    else if (command == "help")
-    {
-        sendResponse(username, "help", getHelpMessage());
-    }
-    else if (command == "browseProducts")
-    {
-        sendResponse(username, "browseProducts", getBrowseProductsMessage());
-    }
-    else if (command == "addToCart" && segments.size() == 5)
-    {
-        handleAddToCart(username, segments);
-    }
-    else if (command == "clearCart")
-    {
-        handleClearCart(username);
-    }
-    else if (command == "viewCart")
-    {
-        sendResponse(username, "viewCart", viewCart(username));
-    }
-    else if (command == "checkout")
-    {
-        checkout(username);
-    }
-    else if (command == "pay")
-    {
-        pay(username);
-    }
-    else if (command == "viewOrders")
-    {
-        sendResponse(username, "viewOrders", viewOrders(username));
-    }
-    else if (command == "stop")
-    {
-        stop(username);
-    }
-    else if (command == "heartbeat")
-    {
-        receiveHeartbeat();
-    }
-    else if (command == "updateCartItem" && segments.size() == 5)
-    {
-        updateCartItem(username, segments);
-    }
-    else if (command == "cancelOrder")
-    {
-        cancelOrder(username);
-    }
-    else if (command == "removeItemFromCart" && segments.size() == 5)
-    {
-        removeItemFromCart(username, segments);
-    }
-    else
-    {
-        qCWarning(ecommercelog) << "Unknown command:" << command.c_str();
-    }
+    std::lock_guard<std::mutex> lock(passwordMutex);
+    qCInfo(ecommercelog) << "Setting password for user: " << username << " Password: " << password;
+    userPasswords[username] = password;
 }
 
-/**
- * @brief Sends a response message to the specified user with a given command and message.
- *
- * @param username The username to send the response to.
- * @param command The command associated with the response.
- * @param message The response message to send.
- */
-void eCommerce::sendResponse(const std::string& username, const std::string& command, const std::string& message)
+bool eCommerce::verifyUserPassword(const std::string& username, const std::string& password)
 {
-    std::string responseTopic = "eCommerce!>" + username + ">" + command;
-    pusher.send(zmq::buffer(responseTopic), zmq::send_flags::sndmore);
-    pusher.send(zmq::buffer(message), zmq::send_flags::none);
-    qCInfo(ecommercelog) << "Sent message to topic:" << responseTopic.c_str();
+    std::lock_guard<std::mutex> lock(passwordMutex);
+    if (userPasswords.find(username) == userPasswords.end()) {
+        qCInfo(ecommercelog) << "Password verification failed: User not found";
+        return false;
+    }
+    qCInfo(ecommercelog) << "Stored password: " << userPasswords[username] << " Provided password: " << password;
+    return userPasswords[username] == password;
 }
 
-/**
- * @brief Handles the "addToCart" command by adding the specified product to the user's cart.
- *
- * @param username The username of the user adding to the cart.
- * @param segments The message segments containing the command details.
- */
-void eCommerce::handleAddToCart(const std::string& username, const std::vector<std::string>& segments)
+void eCommerce::handleAddToCart(const std::string& username, const std::vector<std::string>& segments, const std::string& password)
 {
     try
     {
-        int productId = std::stoi(segments[3]);
-        int quantity = std::stoi(segments[4]);
+        int productId = std::stoi(segments[4]);
+        int quantity = std::stoi(segments[5]);
         validateAddToCartInput(productId, quantity);
         if (products.find(productId) != products.end()) {
             addToCart(username, productId, quantity);
-            sendResponse(username, "addToCart", "Added product " + std::to_string(productId) + " to cart with quantity " + std::to_string(quantity));
+            sendResponse(username, "addToCart", "Added product " + std::to_string(productId) + " to cart with quantity " + std::to_string(quantity), password);
         } else {
-            sendResponse(username, "addToCart", "Error: Product ID " + std::to_string(productId) + " does not exist.");
+            sendResponse(username, "addToCart", "Error: Product ID " + std::to_string(productId) + " does not exist.", password);
         }
     }
     catch (const std::exception& e)
     {
-        sendResponse(username, "addToCart", "Error: " + std::string(e.what()));
+        sendResponse(username, "addToCart", "Error: " + std::string(e.what()), password);
     }
 }
 
-/**
- * @brief Validates the inputs for the "addToCart" command.
- *
- * @param productId The product ID to add to the cart.
- * @param quantity The quantity of the product to add.
- * @throws std::invalid_argument if the quantity is not greater than zero.
- */
 void eCommerce::validateAddToCartInput(int productId, int quantity)
 {
     if (quantity <= 0) {
@@ -345,77 +287,61 @@ void eCommerce::validateAddToCartInput(int productId, int quantity)
     }
 }
 
-/**
- * @brief Handles the "clearCart" command by clearing the user's cart.
- *
- * @param username The username of the user whose cart is to be cleared.
- */
-void eCommerce::handleClearCart(const std::string& username)
+void eCommerce::handleClearCart(const std::string& username, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
     if (userCarts.find(username) == userCarts.end() || userCarts[username].empty())
     {
-        sendResponse(username, "clearCart", "Error: Your cart is already empty.");
+        sendResponse(username, "clearCart", "Error: Your cart is already empty.", password);
     }
     else
     {
         userCarts.erase(username);
-        sendResponse(username, "clearCart", "Your cart has been cleared.");
+        sendResponse(username, "clearCart", "Your cart has been cleared.", password);
     }
 }
 
-/**
- * @brief Generates the help message listing available commands.
- *
- * @return std::string The help message.
- */
 std::string eCommerce::getHelpMessage()
 {
     return "Available commands:\n"
-           "1. browseProducts - Display a list of available products.\n"
-           "2. addToCart <productId> <quantity> - Add a product to the shopping cart.\n"
-           "3. clearCart - Clear the entire shopping cart.\n"
-           "4. viewCart - View the contents of the shopping cart.\n"
-           "5. checkout - Process the checkout and place an order.\n"
-           "6. pay - Complete the payment for your order.\n"
-           "7. viewOrders - View past orders.\n"
-           "8. stop - Log out and clear the cart.\n"
-           "9. updateCartItem <productId> <quantity> - Update the quantity of a product in the shopping cart.\n"
-           "10. cancelOrder - Cancel orders placed in the checkout but not yet paid.\n"
-           "11. removeItemFromCart <productId> <quantity> - Remove a specified quantity of a product from the cart.\n";
+           "1. browseProducts <password> - Display a list of available products.\n"
+           "2. addToCart <password> <productId> <quantity> - Add a product to the shopping cart.\n"
+           "3. clearCart <password> - Clear the entire shopping cart.\n"
+           "4. viewCart <password> - View the contents of the shopping cart.\n"
+           "5. checkout <password> - Process the checkout and place an order.\n"
+           "6. pay <password> - Complete the payment for your order.\n"
+           "7. viewOrders <password> - View past orders.\n"
+           "8. stop <password> - Log out and clear the cart.\n"
+           "9. updateCartItem <password> <productId> <quantity> - Update the quantity of a product in the shopping cart.\n"
+           "10. cancelOrder <password> - Cancel orders placed in the checkout but not yet paid.\n"
+           "11. removeItemFromCart <password> <productId> <quantity> - Remove a specified quantity of a product from the cart.\n"
+           "12. addToWishlist <password> <productId> - Add a product to the wishlist.\n"
+           "13. removeFromWishlist <password> <productId> - Remove a product from the wishlist.\n";
 }
 
-/**
- * @brief Generates the welcome message for new users.
- *
- * @return std::string The welcome message.
- */
 std::string eCommerce::getWelcomeMessage()
 {
     return "Welcome to the eCommerce system!\n"
            "We are delighted to have you on board.\n"
            "This system allows you to browse products, add them to your cart, and make purchases with ease.\n"
            "To get started, you can use the following commands:\n"
-           "1. browseProducts - Display a list of available products.\n"
-           "2. addToCart <productId> <quantity> - Add a product to the shopping cart.\n"
-           "3. clearCart - Clear the entire shopping cart.\n"
-           "4. viewCart - View the contents of the shopping cart.\n"
-           "5. checkout - Process the checkout and place an order.\n"
-           "6. pay - Complete the payment for your order.\n"
-           "7. viewOrders - View past orders.\n"
-           "8. stop - Log out and clear the cart.\n"
-           "9. updateCartItem <productId> <quantity> - Update the quantity of a product in the shopping cart.\n"
-           "10. cancelOrder - Cancel orders placed in the checkout but not yet paid.\n"
-           "11. removeItemFromCart <productId> <quantity> - Remove a specified quantity of a product from the cart.\n"
+           "1. browseProducts <password> - Display a list of available products.\n"
+           "2. addToCart <password> <productId> <quantity> - Add a product to the shopping cart.\n"
+           "3. clearCart <password> - Clear the entire shopping cart.\n"
+           "4. viewCart <password> - View the contents of the shopping cart.\n"
+           "5. checkout <password> - Process the checkout and place an order.\n"
+           "6. pay <password> - Complete the payment for your order.\n"
+           "7. viewOrders <password> - View past orders.\n"
+           "8. stop <password> - Log out and clear the cart.\n"
+           "9. updateCartItem <password> <productId> <quantity> - Update the quantity of a product in the shopping cart.\n"
+           "10. cancelOrder <password> - Cancel orders placed in the checkout but not yet paid.\n"
+           "11. removeItemFromCart <password> <productId> <quantity> - Remove a specified quantity of a product from the cart.\n"
+           "12. addToWishlist <password> <productId> - Add a product to the wishlist.\n"
+           "13. removeFromWishlist <password> <productId> - Remove a product from the wishlist.\n"
            "If you need any assistance, please use the 'help' command or contact our support team.\n"
            "Happy shopping!";
 }
 
-/**
- * @brief Generates the message listing available products.
- *
- * @return std::string The message listing available products.
- */
 std::string eCommerce::getBrowseProductsMessage()
 {
     std::string productsMsg = "Available products:\n";
@@ -425,13 +351,6 @@ std::string eCommerce::getBrowseProductsMessage()
     return productsMsg;
 }
 
-/**
- * @brief Adds a product to the user's cart.
- *
- * @param username The username of the user adding to the cart.
- * @param productId The product ID to add to the cart.
- * @param quantity The quantity of the product to add.
- */
 void eCommerce::addToCart(const std::string& username, int productId, int quantity)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
@@ -440,12 +359,6 @@ void eCommerce::addToCart(const std::string& username, int productId, int quanti
     }
 }
 
-/**
- * @brief Views the contents of the user's cart.
- *
- * @param username The username of the user viewing the cart.
- * @return std::string The message containing the cart contents.
- */
 std::string eCommerce::viewCart(const std::string& username)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
@@ -461,49 +374,48 @@ std::string eCommerce::viewCart(const std::string& username)
     return cartMsg;
 }
 
-/**
- * @brief Handles the "checkout" command by placing an order for the user.
- *
- * @param username The username of the user placing the order.
- */
-void eCommerce::checkout(const std::string& username)
+void eCommerce::checkout(const std::string& username, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
+
+    if (userCarts.find(username) == userCarts.end() || userCarts[username].empty()) {
+        if (userWishlists.find(username) != userWishlists.end() && !userWishlists[username].empty()) {
+            for (const auto& productId : userWishlists[username]) {
+                userCarts[username][productId] = 1;
+            }
+            userWishlists.erase(username);
+        }
+    }
+
     if (userCarts.find(username) != userCarts.end() && !userCarts[username].empty()) {
+        std::string wishlistMsg = checkWishlist(username);
+        if (!wishlistMsg.empty()) {
+            sendResponse(username, "checkout", "You have items in your wishlist that are not in your cart:\n" + wishlistMsg, password);
+            return;
+        }
         orders[username].push_back(userCarts[username]);
         userCarts.erase(username);
         userPaymentStatus[username] = false;
-        sendResponse(username, "checkout", "Your order has been placed successfully. Please proceed to payment.");
+        sendResponse(username, "checkout", "Your order has been placed successfully. Please proceed to payment.", password);
     } else {
-        sendResponse(username, "checkout", "Your cart is empty. Cannot place an order.");
+        sendResponse(username, "checkout", "Your cart is empty. Cannot place an order.", password);
     }
 }
 
-/**
- * @brief Handles the "pay" command by completing the payment for the user's order.
- *
- * @param username The username of the user making the payment.
- */
-void eCommerce::pay(const std::string& username)
+void eCommerce::pay(const std::string& username, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
     if (orders.find(username) != orders.end() && !orders[username].empty())
     {
         userPaymentStatus[username] = true;
-        sendResponse(username, "pay", "Your payment has been received. Thank you for your purchase!");
+        sendResponse(username, "pay", "Your payment has been received. Thank you for your purchase!", password);
     }
     else
     {
-        sendResponse(username, "pay", "No pending orders to pay for.");
+        sendResponse(username, "pay", "No pending orders to pay for.", password);
     }
 }
 
-/**
- * @brief Views the past orders for the user.
- *
- * @param username The username of the user viewing orders.
- * @return std::string The message containing the past orders.
- */
 std::string eCommerce::viewOrders(const std::string& username)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
@@ -526,74 +438,52 @@ std::string eCommerce::viewOrders(const std::string& username)
     return ordersMsg;
 }
 
-/**
- * @brief Handles the "stop" command by logging out the user and clearing their cart.
- *
- * @param username The username of the user logging out.
- */
-void eCommerce::stop(const std::string& username)
+void eCommerce::stop(const std::string& username, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
     userCarts.erase(username);
     userPaymentStatus.erase(username);
-    sendResponse(username, "stop", "User " + username + " has been logged out and their cart has been cleared.");
+    sendResponse(username, "stop", "User " + username + " has been logged out and their cart has been cleared.", password);
 }
 
-/**
- * @brief Handles the "updateCartItem" command by updating the quantity of a product in the user's cart.
- *
- * @param username The username of the user updating the cart.
- * @param segments The message segments containing the command details.
- */
-void eCommerce::updateCartItem(const std::string& username, const std::vector<std::string>& segments)
+void eCommerce::updateCartItem(const std::string& username, const std::vector<std::string>& segments, const std::string& password)
 {
     try
     {
-        int productId = std::stoi(segments[3]);
-        int quantity = std::stoi(segments[4]);
+        int productId = std::stoi(segments[4]);
+        int quantity = std::stoi(segments[5]);
         validateAddToCartInput(productId, quantity);
         std::lock_guard<std::mutex> lock(cartMutex);
         if (products.find(productId) != products.end() && userCarts[username].find(productId) != userCarts[username].end()) {
             userCarts[username][productId] = quantity;
-            sendResponse(username, "updateCartItem", "Updated product " + std::to_string(productId) + " to quantity " + std::to_string(quantity));
+            sendResponse(username, "updateCartItem", "Updated product " + std::to_string(productId) + " to quantity " + std::to_string(quantity), password);
         } else {
-            sendResponse(username, "updateCartItem", "Error: Product ID " + std::to_string(productId) + " does not exist in your cart.");
+            sendResponse(username, "updateCartItem", "Error: Product ID " + std::to_string(productId) + " does not exist in your cart.", password);
         }
     }
     catch (const std::exception& e)
     {
-        sendResponse(username, "updateCartItem", "Error: " + std::string(e.what()));
+        sendResponse(username, "updateCartItem", "Error: " + std::string(e.what()), password);
     }
 }
 
-/**
- * @brief Handles the "cancelOrder" command by cancelling orders placed in the checkout but not yet paid.
- *
- * @param username The username of the user cancelling the order.
- */
-void eCommerce::cancelOrder(const std::string& username)
+void eCommerce::cancelOrder(const std::string& username, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(cartMutex);
     if (orders.find(username) != orders.end() && !orders[username].empty() && !userPaymentStatus[username]) {
         orders[username].pop_back();
-        sendResponse(username, "cancelOrder", "Your last order has been cancelled.");
+        sendResponse(username, "cancelOrder", "Your last order has been cancelled.", password);
     } else {
-        sendResponse(username, "cancelOrder", "No orders to cancel or the order has already been paid.");
+        sendResponse(username, "cancelOrder", "No orders to cancel or the order has already been paid.", password);
     }
 }
 
-/**
- * @brief Handles the "removeItemFromCart" command by removing a specified quantity of a product from the user's cart.
- *
- * @param username The username of the user removing the item from the cart.
- * @param segments The message segments containing the command details.
- */
-void eCommerce::removeItemFromCart(const std::string& username, const std::vector<std::string>& segments)
+void eCommerce::removeItemFromCart(const std::string& username, const std::vector<std::string>& segments, const std::string& password)
 {
     try
     {
-        int productId = std::stoi(segments[3]);
-        int quantity = std::stoi(segments[4]);
+        int productId = std::stoi(segments[4]);
+        int quantity = std::stoi(segments[5]);
         std::lock_guard<std::mutex> lock(cartMutex);
         if (userCarts[username].find(productId) != userCarts[username].end()) {
             if (userCarts[username][productId] >= quantity) {
@@ -601,16 +491,85 @@ void eCommerce::removeItemFromCart(const std::string& username, const std::vecto
                 if (userCarts[username][productId] == 0) {
                     userCarts[username].erase(productId);
                 }
-                sendResponse(username, "removeItemFromCart", "Removed " + std::to_string(quantity) + " of product " + std::to_string(productId) + " from cart.");
+                sendResponse(username, "removeItemFromCart", "Removed " + std::to_string(quantity) + " of product " + std::to_string(productId) + " from cart.", password);
             } else {
-                sendResponse(username, "removeItemFromCart", "Error: Not enough quantity to remove.");
+                sendResponse(username, "removeItemFromCart", "Error: Not enough quantity to remove.", password);
             }
         } else {
-            sendResponse(username, "removeItemFromCart", "Error: Product ID " + std::to_string(productId) + " does not exist in your cart.");
+            sendResponse(username, "removeItemFromCart", "Error: Product ID " + std::to_string(productId) + " does not exist in your cart.", password);
         }
     }
     catch (const std::exception& e)
     {
-        sendResponse(username, "removeItemFromCart", "Error: " + std::string(e.what()));
+        sendResponse(username, "removeItemFromCart", "Error: " + std::string(e.what()), password);
     }
+}
+
+void eCommerce::handleAddToWishlist(const std::string& username, const std::vector<std::string>& segments, const std::string& password)
+{
+    try
+    {
+        int productId = std::stoi(segments[4]);
+        std::lock_guard<std::mutex> lock(wishlistMutex);
+        if (products.find(productId) != products.end()) {
+            userWishlists[username].insert(productId);
+            sendResponse(username, "addToWishlist", "Added product " + std::to_string(productId) + " to wishlist.", password);
+        } else {
+            sendResponse(username, "addToWishlist", "Error: Product ID " + std::to_string(productId) + " does not exist.", password);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        sendResponse(username, "addToWishlist", "Error: " + std::string(e.what()), password);
+    }
+}
+
+void eCommerce::handleRemoveFromWishlist(const std::string& username, const std::vector<std::string>& segments, const std::string& password)
+{
+    try
+    {
+        int productId = std::stoi(segments[4]);
+        std::lock_guard<std::mutex> lock(wishlistMutex);
+        if (products.find(productId) != products.end()) {
+            if (userWishlists[username].erase(productId)) {
+                sendResponse(username, "removeFromWishlist", "Removed product " + std::to_string(productId) + " from wishlist.", password);
+            } else {
+                sendResponse(username, "removeFromWishlist", "Error: Product ID " + std::to_string(productId) + " does not exist in your wishlist.", password);
+            }
+        } else {
+            sendResponse(username, "removeFromWishlist", "Error: Product ID " + std::to_string(productId) + " does not exist.", password);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        sendResponse(username, "removeFromWishlist", "Error: " + std::string(e.what()), password);
+    }
+}
+
+std::string eCommerce::checkWishlist(const std::string& username)
+{
+    std::lock_guard<std::mutex> lock(wishlistMutex);
+    std::string wishlistMsg;
+    if (userWishlists.find(username) != userWishlists.end()) {
+        for (int productId : userWishlists[username]) {
+            if (userCarts[username].find(productId) == userCarts[username].end()) {
+                wishlistMsg += products[productId].first + "\n";
+            }
+        }
+    }
+    return wishlistMsg;
+}
+
+/**
+ * @brief Sends a response message to the client.
+ *
+ * @param username The username of the client.
+ * @param command The command being responded to.
+ * @param message The response message content.
+ * @param password The password of the user for verification.
+ */
+void eCommerce::sendResponse(const std::string& username, const std::string& command, const std::string& message, const std::string& password)
+{
+    std::string response = "eCommerce!>" + username + ">" + command + ">" + password + ">" + message;
+    pusher.send(zmq::buffer(response), zmq::send_flags::none);
 }
